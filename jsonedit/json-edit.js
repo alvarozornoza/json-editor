@@ -159,20 +159,24 @@
             if (options["afterValueChanged"]) options["afterValueChanged"](options["value"], options["schema"]);
         }
 
-        function renderSchemaNode(schemaNode, schemaName, requiredItems) {
+        function renderSchemaNode(schemaNode, schemaName) {
             var nodeType = fixNU(schemaNode["type"], "string");
             if (nodeType == "string" || nodeType == "number" || nodeType == "integer" || nodeType == "boolean")
-                return renderSimpleNode(schemaNode, schemaName, (requiredItems ? requiredItems.includes(schemaName) : false));
+            {
+                var required = fixNU(schemaNode["required"], false);
+                var disabled = fixNU(schemaNode["disabled"], false);
+                return renderSimpleNode(schemaNode, schemaName, required, disabled);
+            }
             if (nodeType == "array") return renderArrayNode(schemaNode, schemaName);
             if (nodeType == "object") return renderObjectNode(schemaNode, schemaName);
             return "";
         }
 
-        function renderSimpleNode(schemaNode, schemaName, isRequired) {
+        function renderSimpleNode(schemaNode, schemaName, isRequired, isDisabled) {
             var ContainerT = '<table $hover-hint$ class="j-container"><tr class="j-oject-value-row">$$$</tr></table>';
             var TitleT = '<td class="j-title-col">$$$</td><td class="j-sep-col"></td>';
             var BodyT = '<td class="j-body-col">$$$</td>';
-            var requiredAtt = "", requiredStar = "", inputBody = "";
+            var requiredAtt = "", disabledAtt = "", requiredStar = "", inputBody = "";
             var additionalClass = " " + getUISetting(schemaNode, "class", "");
             var nodeType = fixNU(schemaNode["type"], "string");
             var hoverHint = getUISetting(schemaNode, "hoverHint", "");
@@ -189,6 +193,9 @@
             if (isRequired) {
                 requiredAtt = ' data-required="true" ';
                 requiredStar = '&nbsp;&nbsp;<span class="j-required-star">*</span>';
+            }
+            if (isDisabled) {
+                disabledAtt = ' disabled="true" ';
             }
 
             if (nodeType == "boolean") {
@@ -209,7 +216,7 @@
                     } else {
                         classAtt = ' class="j-input j-input-' + editor + additionalClass + '" ';
                         inputBody = (editor == "color" ? "&nbsp;&nbsp;" : "") + '<input type="' + editor + '" '
-                            + classAtt + dataValueNameAtt + placeholderHint + requiredAtt + minAtt + maxAtt + ' />' + htmlEditor;
+                            + classAtt + dataValueNameAtt + placeholderHint + requiredAtt + minAtt + maxAtt + disabledAtt + ' />' + htmlEditor;
                     }
                 } else {
                     var editor = getUISetting(schemaNode, "editor", "select");
@@ -219,7 +226,6 @@
                         var nameAtt = ' name="rdo_' + schemaName + '" ';
                         inputBody = '<label><input checked value="' + options["radioNullCaption"] + '" ' + classAtt + ' type="radio" ' + nameAtt
                             + dataValueNameAtt + requiredAtt + ' /><span class="j-input-radio-label">null</span></label>&nbsp;&nbsp;&nbsp;';
-                        console.log(inputBody);
                         jQuery.each(schemaNode["enum"], function (index) {
                             inputBody += '<label><input value="' + schemaNode["enum"][index] + '" type="radio" ' + classAtt + nameAtt + dataValueNameAtt + requiredAtt
                                 + ' /><span class="j-input-radio-label">' + schemaNode["enum"][index] + '</span></label>&nbsp;&nbsp;&nbsp;';
@@ -258,7 +264,7 @@
 
             level = level + 1;
             properties.forEach(function (item, index, arr) {
-                temp += renderSchemaNode(schemaNode["properties"][item.toString()], item.toString(), schemaNode["required"]);
+                temp += renderSchemaNode(schemaNode["properties"][item.toString()], item.toString());
             });
             level = level - 1;
             return ContainerT.replace("$$$", TitleT + BodyT.replace("$$$", temp));
@@ -285,8 +291,8 @@
             if (arrType == "string" || "number" || "boolean") {
                 if (schemaNode["items"] && schemaNode["items"]["ui"]) arrSchema["ui"] = schemaNode["items"]["ui"];
                 if (schemaNode["items"] && schemaNode["items"]["enum"]) arrSchema["enum"] = schemaNode["items"]["enum"];
-                arrSchema["title"] = arrSchema["title"] + ' [$index$] <span class="j-remove-array-item" data-index="$index$"> X </span>';
-                itemContainerT = renderSimpleNode(arrSchema, "$index$");
+                arrSchema["title"] = arrSchema["title"] + ' <span class="j-remove-array-item" data-index="$index$">X</span> &nbsp [$index$]';
+                itemContainerT = renderSimpleNode(arrSchema, "$index$", fixNU(schemaNode["items"]["required"]), fixNU(schemaNode["items"]["disabled"]));
             }
 
             if (arrType.startsWith("#")) {
