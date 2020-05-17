@@ -117,7 +117,7 @@
             var p = nodeToRemove.parents("td:first").attr("data-path");
             eval('options["value"]' + p + '.splice(' + itemIndex + ',1);');
             nodeToRemove.remove();
-            setValue(options["value"]);
+            //setValue(options["value"]);
             if (options["afterValueChanged"]) options["afterValueChanged"](options["value"], options["schema"]);
         }
 
