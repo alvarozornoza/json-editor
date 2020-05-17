@@ -143,6 +143,7 @@
             if (needInitiations) {
                 initValuePathes();
                 initEvents();
+                validateWidget();
             }
         }
 
